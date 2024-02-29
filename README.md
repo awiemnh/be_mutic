@@ -1,3 +1,9 @@
+Requirements:
+- Frontend: React Native
+- Backend: NodeJS -> ExpressJS
+- Database: Postgre
+
+
 Entity Relational Database(ERD):
 
 ![ERD](https://github.com/awiemnh/be_mutic/assets/64024502/f078739c-e273-4a38-941e-9fffbe2a2c46)
