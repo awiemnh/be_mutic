@@ -97,8 +97,10 @@ exports.user = async(req,res)=>{
         }
 };
 
-exports.queue = async (req, res) => {
-    const { no_rek, keperluan } = req.body;
+exports.queueTeller = async (req, res) => {
+    const { username, no_rek, keperluan } = req.body;
+    console.log("norek", no_rek);
+    console.log("keperluan", keperluan);
     const token = req.headers.authorization;
 
     if (!token || !token.startsWith('Bearer ')) {
@@ -113,54 +115,53 @@ exports.queue = async (req, res) => {
             return res.status(401).json({ message: 'Unauthorized: Invalid token' });
         }
 
-        // Save queuing information
-        await model.saveQueueInfo(no_rek, keperluan);
+        // Generate sequential queue number (1 to 100)
+        const queueNumber = await model.getNextQueueNumberTeller();
 
-        res.status(200).json({ message: 'Queue information saved successfully' });
+        // Save queuing information
+        await model.saveQueueInfo(username, no_rek, keperluan, queueNumber);
+
+        // Update the no_antrian_teller column in the database
+        await model.saveNumberQueueTeller(no_rek, queueNumber);
+
+        res.status(200).json({ message: 'Queue information saved successfully', queueNumber });
     } catch (error) {
         console.error('Error during queuing:', error);
         res.status(500).json({ message: 'Internal server error' });
     }
 };
 
-//fungsi generate teller  no anrtran dilempar 
-exports.generateNumberQueueTeller = async (userId) => {
-    try {
-        // Find the user by ID from the database
-        const user = await User.findById(userId);
+exports.queueCS = async (req, res) => {
+    const { username, no_rek, keperluan } = req.body;
+    console.log("norek", no_rek);
+    console.log("keperluan", keperluan);
+    const token = req.headers.authorization;
 
-        // Check if the user is found and has queueInfo property
-        if (!user || !user.queueInfo) {
-            throw new Error('User not found or missing queueInfo property');
+    if (!token || !token.startsWith('Bearer ')) {
+        return res.status(401).json({ message: 'Unauthorized: Missing or invalid token' });
+    }
+
+    try {
+        const authToken = token.split(' ')[1];
+        const user = await model.getUserByToken(authToken);
+
+        if (!user || user.token !== authToken) {
+            return res.status(401).json({ message: 'Unauthorized: Invalid token' });
         }
 
-        // Generate a new queue number (increment the last queue number)
-        const newQueueNumberTeller = user.queueInfo.queueNumber ? user.queueInfo.queueNumber + 1 : 1;
+        // Generate sequential queue number (1 to 100)
+        const queueNumber = await model.getNextQueueNumberCS();
 
-        return newQueueNumberTeller;
+        // Save queuing information
+        await model.saveQueueInfo(username, no_rek, keperluan, queueNumber);
+
+        // Update the no_antrian_teller column in the database
+        await model.saveNumberQueueCS(no_rek, queueNumber);
+
+        res.status(200).json({ message: 'Queue information saved successfully', queueNumber });
     } catch (error) {
-        throw error;
+        console.error('Error during queuing:', error);
+        res.status(500).json({ message: 'Internal server error' });
     }
 };
-
-//fungsi generate cs  no anrtran dilempar 
-exports.generateNumberQueueCS = async (userId) => {
-    try {
-        // Find the user by ID from the database
-        const user = await User.findById(userId);
-
-        // Check if the user is found and has queueInfo property
-        if (!user || !user.queueInfo) {
-            throw new Error('User not found or missing queueInfo property');
-        }
-
-        // Generate a new queue number (increment the last queue number)
-        const newQueueNumberCS = user.queueInfo.queueNumber ? user.queueInfo.queueNumber + 1 : 1;
-
-        return newQueueNumberCS;
-    } catch (error) {
-        throw error;
-    }
-};
-
 

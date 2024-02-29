@@ -37,11 +37,11 @@ const createUser = async (username, email, password, token) => {
     }
 };
 
-const getUserByToken = async (id,token) => {
+const getUserByToken = async (token) => {
     try {
 
         const query = 'SELECT * FROM users WHERE token = $1';
-        const { rows } = await db.query(query, [id,token]);
+        const { rows } = await db.query(query, [token]);
         //console.log(query);
         return rows[0];
     } catch (error) {
@@ -51,83 +51,59 @@ const getUserByToken = async (id,token) => {
 };
 
 // Function to save queuing information
-const saveQueueInfo = async (id, no_rek, keperluan) => {
+const saveQueueInfo = async (username, no_rek, keperluan) => {
     try {
-        const user = await db.findById(id);
+        const query = 'UPDATE users SET no_rek = $2, keperluan = $3 WHERE username = $1 RETURNING *';
+        const user = await db.query(query, [username, no_rek, keperluan]);
 
-        if (!user) {
-            throw new Error('User not found');
-        }
-
-        // Save queuing information to the user document
-        user.queueInfo = {
-            no_rek,
-            keperluan,
-        };
-
-        await user.save();
-
-        return user.queueInfo; // Return the saved queuing information if needed
+        return user;
     } catch (error) {
         throw error;
     }
 };
-
 
 
 //fungsi save generate number queue teller
-const saveNumberQueueTeller = async () => {
+const saveNumberQueueTeller = async (no_rek,no_antrian_teller) => {
     try {
-        const user = await db.findById(id);
-
-        if (!user) {
-            throw new Error('User not found');
-        }
-
-        // Save queuing information to the user document
-        user.queueInfo = {
-            newQueueNumberTeller
-        };
-
-        await user.save();
-
-        return user.queueInfo; // Return the saved queuing information if needed
+        const query = 'UPDATE users SET no_antrian_teller = $2 WHERE no_rek = $1 RETURNING *';
+        const user = await db.query(query, [no_rek, no_antrian_teller]);
+        return user.rows[0]; // Return the saved queuing information if needed
     } catch (error) {
         throw error;
     }
 };
 
-//fungsi save generate number queue teller
-const saveNumberQueueCS = async () => {
+const getNextQueueNumberTeller = async () => {
     try {
-        const user = await db.findById(id);
-
-        if (!user) {
-            throw new Error('User not found');
-        }
-
-        // Save queuing information to the user document
-        user.queueInfo = {
-            newQueueNumberCS
-        };
-
-        await user.save();
-
-        return user.queueInfo; // Return the saved queuing information if needed
+        const result = await db.query('SELECT MAX(no_antrian_teller) FROM users');
+        const lastQueueNumber = result.rows[0].max || 0;
+        return lastQueueNumber + 1;
     } catch (error) {
         throw error;
     }
 };
 
-// fungsi utk ambil antrain dr database yang ydg digenerate ke frontend(1) 
-const getNumberQueueByUsernameOrEmail = async (usernameOrEmail) => {
+//fungsi save generate number queue CS
+const saveNumberQueueCS = async (no_rek,no_antrian_CS) => {
     try {
-        const query = 'SELECT * FROM users WHERE username = $1 OR email = $1';
-        const { rows } = await db.query(query, [usernameOrEmail]);
-        return rows[0];
+        const query = 'UPDATE users SET no_antrian_CS = $2 WHERE no_rek = $1 RETURNING *';
+        const user = await db.query(query, [no_rek, no_antrian_CS]);
+        return user.rows[0]; // Return the saved queuing information if needed
     } catch (error) {
-        console.error('Error fetching user:', error);
         throw error;
     }
 };
-module.exports = { getUserByUsernameOrEmail, createUser,saveToken, getUserByToken ,saveQueueInfo,getNumberQueueByUsernameOrEmail,saveNumberQueueTeller,saveNumberQueueCS };
+
+const getNextQueueNumberCS = async () => {
+    try {
+        const result = await db.query('SELECT MAX(no_antrian_CS) FROM users');
+        const lastQueueNumber = result.rows[0].max || 0;
+        return lastQueueNumber + 1;
+    } catch (error) {
+        throw error;
+    }
+};
+
+
+module.exports = { getUserByUsernameOrEmail, createUser,saveToken, getUserByToken ,saveQueueInfo,saveNumberQueueTeller,getNextQueueNumberTeller,saveNumberQueueCS,getNextQueueNumberCS};
