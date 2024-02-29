@@ -18,7 +18,7 @@ exports.login = async (req, res) => {
 
         
         const token = jwt.sign({ id: user.id }, process.env.JWT_SECRET, { expiresIn: '1h' });
-        //console.log(user, user.id,'cari user')
+        
         await model.saveToken({token}, user.id);
         
         res.json({ token });
@@ -86,7 +86,7 @@ exports.user = async(req,res)=>{
 
     try {
         const authToken = token.split(' ')[1];
-        const user = await model.getAllUserByToken(authToken);
+        const user = await model.getUserByToken(authToken);
         console.log (user,authToken,'check user');
         if (!user || user.token !== authToken) {
             return res.status(401).json({ message: 'Unauthorized: Invalid token' });
@@ -96,3 +96,71 @@ exports.user = async(req,res)=>{
         res.status(500).json({ message: 'Internal server error' });
         }
 };
+
+exports.queue = async (req, res) => {
+    const { no_rek, keperluan } = req.body;
+    const token = req.headers.authorization;
+
+    if (!token || !token.startsWith('Bearer ')) {
+        return res.status(401).json({ message: 'Unauthorized: Missing or invalid token' });
+    }
+
+    try {
+        const authToken = token.split(' ')[1];
+        const user = await model.getUserByToken(authToken);
+
+        if (!user || user.token !== authToken) {
+            return res.status(401).json({ message: 'Unauthorized: Invalid token' });
+        }
+
+        // Save queuing information
+        await model.saveQueueInfo(no_rek, keperluan);
+
+        res.status(200).json({ message: 'Queue information saved successfully' });
+    } catch (error) {
+        console.error('Error during queuing:', error);
+        res.status(500).json({ message: 'Internal server error' });
+    }
+};
+
+//fungsi generate teller  no anrtran dilempar 
+exports.generateNumberQueueTeller = async (userId) => {
+    try {
+        // Find the user by ID from the database
+        const user = await User.findById(userId);
+
+        // Check if the user is found and has queueInfo property
+        if (!user || !user.queueInfo) {
+            throw new Error('User not found or missing queueInfo property');
+        }
+
+        // Generate a new queue number (increment the last queue number)
+        const newQueueNumberTeller = user.queueInfo.queueNumber ? user.queueInfo.queueNumber + 1 : 1;
+
+        return newQueueNumberTeller;
+    } catch (error) {
+        throw error;
+    }
+};
+
+//fungsi generate cs  no anrtran dilempar 
+exports.generateNumberQueueCS = async (userId) => {
+    try {
+        // Find the user by ID from the database
+        const user = await User.findById(userId);
+
+        // Check if the user is found and has queueInfo property
+        if (!user || !user.queueInfo) {
+            throw new Error('User not found or missing queueInfo property');
+        }
+
+        // Generate a new queue number (increment the last queue number)
+        const newQueueNumberCS = user.queueInfo.queueNumber ? user.queueInfo.queueNumber + 1 : 1;
+
+        return newQueueNumberCS;
+    } catch (error) {
+        throw error;
+    }
+};
+
+
