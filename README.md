@@ -11,5 +11,5 @@ Entity Relational Database(ERD):
 ![Tugas Akhir Bootcamp IT Specialist drawio](https://github.com/awiemnh/be_mutic/assets/64024502/948dfae0-f8e9-420a-90d2-963f13296950)
 
 Flowchart: 
-![Uploading flowchart.drawio (1).png…]()
 
+![WhatsApp Image 2024-02-29 at 20 01 45](https://github.com/awiemnh/be_mutic/assets/64024502/cb273b81-07e2-4fa5-b078-a7c099baa343)
